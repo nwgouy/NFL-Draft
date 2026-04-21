@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>2026 NFL Draft Prediction Model</title>
+<title>2026 NFL Draft War Room</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -271,42 +271,224 @@
   }
   .btn.ghost{background:transparent; color:var(--gold); border:1px solid var(--gold-dim)}
   .btn.sm{padding:5px 10px; font-size:11.5px}
+
+
+/* ===================================================================
+   2026 DRAFT WAR ROOM UPGRADE
+   =================================================================== */
+:root{
+  --ink:#f8fbff;
+  --night:#050813;
+  --steel:#111827;
+  --field:#0a2f28;
+  --line:#253150;
+  --neon:#28d8ff;
+  --ember:#ff7a45;
+  --mint:#52f2a8;
+  --cream:#f6f0de;
+  --danger:#ff4f64;
+  --card-glow: 0 18px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+}
+html{scroll-behavior:smooth}
+body{
+  background:
+    linear-gradient(180deg, rgba(5,8,19,.78), rgba(5,8,19,.98)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 72px),
+    linear-gradient(135deg, #07182c 0%, #0a221e 42%, #1b1019 100%);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,.055) 50%, transparent 50.3%),
+    repeating-linear-gradient(0deg, transparent 0 70px, rgba(255,255,255,.035) 71px 72px);
+  mask-image:linear-gradient(180deg, rgba(0,0,0,.9), transparent 72%);
+}
+body::after{
+  content:""; position:fixed; inset:auto 0 0; height:18vh; pointer-events:none; z-index:-1;
+  background:linear-gradient(180deg, transparent, rgba(82,242,168,.08));
+}
+header.hero{
+  min-height:min(76vh, 780px);
+  padding:34px clamp(18px, 4vw, 58px) 28px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:28px;
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(4,8,20,.42), rgba(4,8,20,.86)),
+    radial-gradient(circle at 50% 105%, rgba(82,242,168,.24), transparent 34%),
+    linear-gradient(120deg, #0d1b35 0%, #0a2b24 54%, #241018 100%);
+}
+header.hero::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255,255,255,.09) 8.15%, transparent 8.35%, transparent 91.65%, rgba(255,255,255,.09) 91.85%, transparent 92%),
+    repeating-linear-gradient(90deg, transparent 0 96px, rgba(255,255,255,.05) 97px 99px),
+    repeating-linear-gradient(0deg, transparent 0 54px, rgba(255,255,255,.03) 55px 56px);
+  opacity:.72;
+}
+.brand{position:relative; z-index:1; justify-content:space-between; align-items:flex-start; gap:18px}
+.brand-main{display:flex; align-items:center; gap:14px; min-width:min(620px, 100%)}
+.shield{
+  width:58px; height:58px; border-radius:8px 8px 16px 16px;
+  clip-path:polygon(8% 0,92% 0,100% 62%,50% 100%,0 62%);
+  background:linear-gradient(145deg, var(--cream), var(--gold) 48%, var(--ember));
+  box-shadow:0 16px 45px rgba(245,195,75,.28), inset 0 2px 0 rgba(255,255,255,.5);
+  color:#09111d; font-size:20px;
+}
+h1{font-size:clamp(34px, 7vw, 92px); line-height:.89; max-width:980px; letter-spacing:0; text-transform:uppercase}
+.kicker{font-size:12px; color:var(--mint); letter-spacing:2.2px; text-transform:uppercase; font-weight:800; margin-bottom:10px}
+.subtitle{font-size:clamp(14px, 1.4vw, 18px); line-height:1.52; max-width:780px; color:#b9c5d8}
+.tag{border-radius:6px; color:#09111d; border:0; background:var(--gold); font-weight:900}
+.hero-stage{position:relative; z-index:1; display:grid; grid-template-columns:minmax(0, 1fr) minmax(280px, 430px); gap:26px; align-items:end}
+.hero-copy{align-self:center}
+.hero-actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:24px}
+.btn,.hero-action{
+  min-height:40px; border-radius:7px; border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(180deg, #f8d76c, #e3ad33); color:#08111e;
+  box-shadow:0 12px 26px rgba(245,195,75,.18); font-weight:900;
+}
+.hero-action.secondary,.btn.ghost{background:rgba(255,255,255,.06); color:var(--ink); border-color:rgba(255,255,255,.18); box-shadow:none}
+.draft-clock{
+  border:1px solid rgba(255,255,255,.16); border-radius:8px; padding:16px;
+  background:linear-gradient(180deg, rgba(9,17,34,.78), rgba(9,17,34,.5));
+  box-shadow:var(--card-glow); backdrop-filter:blur(18px);
+}
+.clock-label{font-size:11px; text-transform:uppercase; letter-spacing:1.8px; color:var(--mint); font-weight:900}
+.clock-team{font-size:26px; font-weight:950; margin:8px 0 12px; line-height:1.05}
+.clock-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.clock-tile{background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.09); border-radius:7px; padding:10px}
+.clock-tile strong{display:block; font-size:22px; color:var(--gold)}
+.clock-tile span{font-size:10px; color:#aeb9cb; text-transform:uppercase; letter-spacing:.7px}
+.stat-ribbon{position:relative; z-index:1; display:grid; grid-template-columns:repeat(4, minmax(140px, 1fr)); gap:10px}
+.stat-tile{border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.055); border-radius:8px; padding:13px 14px; box-shadow:var(--card-glow)}
+.stat-tile .num{font-size:clamp(24px, 3vw, 34px); font-weight:950; color:var(--ink)}
+.stat-tile .lbl{font-size:11px; color:#aeb9cb; text-transform:uppercase; letter-spacing:1px; margin-top:2px}
+nav.tabs{
+  top:0; padding:8px clamp(12px, 3vw, 32px); gap:8px;
+  background:rgba(5,8,19,.82); backdrop-filter:blur(18px); border-bottom:1px solid rgba(255,255,255,.11);
+}
+nav.tabs button{border:1px solid transparent; border-radius:7px; padding:11px 14px; color:#b6c0d1; white-space:nowrap}
+nav.tabs button.active{background:rgba(255,255,255,.08); border-color:rgba(245,195,75,.35); color:var(--gold)}
+main{padding:24px clamp(14px, 3vw, 34px) 64px; max-width:1500px}
+.command-deck{
+  display:grid; grid-template-columns:minmax(260px, 1fr) auto; gap:14px; align-items:center;
+  margin-bottom:18px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:8px;
+  background:rgba(9,17,34,.58); box-shadow:var(--card-glow); backdrop-filter:blur(14px);
+}
+.controls{margin:0; gap:8px}
+.controls input,.controls select,.pickrow select{
+  min-height:40px; border-radius:7px; background:rgba(0,0,0,.24); border-color:rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.controls input{min-width:min(340px, 100%)}
+.pill,.controls .pill{border-radius:7px; min-height:34px; display:inline-flex; align-items:center; font-weight:800}
+.controls .pill.active{background:rgba(245,195,75,.12)}
+.quick-tools{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+.icon-btn{width:40px; height:40px; border-radius:7px; border:1px solid rgba(255,255,255,.13); background:rgba(255,255,255,.06); color:var(--ink); cursor:pointer; font-weight:950}
+.icon-btn.active{border-color:var(--gold); color:#09111d; background:var(--gold)}
+.grid{grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:16px}
+.card,.bust-card,.method-card,.recommend,.pickrow{
+  border-radius:8px; border-color:rgba(255,255,255,.12); box-shadow:var(--card-glow);
+  background:linear-gradient(180deg, rgba(18,28,52,.92), rgba(11,17,32,.92));
+}
+.card{overflow:hidden; padding:16px; min-height:174px}
+.card::before{content:""; position:absolute; inset:0 0 auto; height:4px; background:linear-gradient(90deg, var(--gold), var(--mint), var(--neon)); opacity:.85}
+.card:hover{transform:translateY(-4px); border-color:rgba(82,242,168,.42)}
+.card .name{font-size:18px; letter-spacing:0}
+.card .rank{top:14px; right:14px; padding:4px 7px; border-radius:5px; background:rgba(255,255,255,.07); color:#d7deea; font-weight:900}
+.score{border-radius:7px; background:rgba(0,0,0,.22)}
+.tier{border-radius:6px}.pos-badge{border-radius:4px}
+.drawer{background:rgba(3,6,12,.68)}
+.drawer-inner{background:linear-gradient(180deg, #101a31, #070b16); box-shadow:-30px 0 90px rgba(0,0,0,.48)}
+.close-btn{width:38px; height:38px; border-radius:7px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12)}
+.board-wrap{grid-template-columns:minmax(0, 1.25fr) minmax(310px, .75fr)}
+.pickrow{grid-template-columns:54px minmax(0,1fr) auto; position:relative; overflow:hidden}
+.pickrow.on-clock::before{content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--gold)}
+.pickrow .pick-num{font-size:18px}.pickrow .team{font-size:14px}.pickrow .selected{color:var(--mint)}
+.recommend{top:74px; border-color:rgba(245,195,75,.22)}
+.bpa-card{border-radius:8px; background:rgba(255,255,255,.055)}
+.bpa-card:hover{border-color:var(--mint); transform:translateX(2px)}
+.bust-card,.method-card{padding:16px}
+.footer{max-width:920px; margin:20px auto 0; line-height:1.5}
+.spotlight .card{opacity:.28; transform:scale(.985)}
+.spotlight .card.spotlight-hit{opacity:1; border-color:var(--gold); transform:translateY(-3px)}
+@media (max-width: 900px){
+  header.hero{min-height:auto}.hero-stage{grid-template-columns:1fr}.draft-clock{max-width:520px}.stat-ribbon{grid-template-columns:repeat(2,1fr)}
+  .command-deck{grid-template-columns:1fr}.quick-tools{justify-content:flex-start}.board-wrap{grid-template-columns:1fr}.recommend{position:relative; top:auto}
+}
+@media (max-width: 560px){
+  .brand{display:block}.brand-main{align-items:flex-start; min-width:0}.shield{width:48px;height:48px;flex:0 0 auto}.stat-ribbon{grid-template-columns:1fr}
+  nav.tabs{overflow-x:auto; flex-wrap:nowrap}.grid{grid-template-columns:1fr}.score-box{gap:7px}.score .val{font-size:17px}.pickrow{grid-template-columns:42px 1fr;}.pickrow>div:last-child{grid-column:2;width:100%}.pickrow select{width:100%;max-width:none}
+}
+
 </style>
 </head>
 <body>
 
 <header class="hero">
   <div class="brand">
-    <div class="shield">26</div>
-    <div>
-      <h1>2026 NFL Draft Prediction Model</h1>
-      <div class="subtitle">
-        <span class="tag">April 21, 2026</span>
-        &nbsp;Eight-factor model &middot; live Best-Available-Player engine &middot; bust-risk pattern matching
-      </div>
-      <div class="subtitle" style="margin-top:6px; color:#7df0b8">
-        ✓ Prospect list verified against actual 2026 declarations. Removed:
-        Arch Manning, Drew Allar, LaNorris Sellers (returned to school) &middot;
-        Jeremiah Smith, Ryan Williams, Colin Simmons, Dylan Stewart, DJ Lagway (HS class of 2024, eligible earliest 2027).
-        Added: Fernando Mendoza, Ty Simpson, Carson Beck, Arvell Reese, Jordyn Tyson, Dillon Thieneman, Omar Cooper Jr., Kayden McDonald.
+    <div class="brand-main">
+      <div class="shield">26</div>
+      <div>
+        <div class="kicker">Interactive War Room · April 21, 2026</div>
+        <h1>2026 NFL Draft</h1>
       </div>
     </div>
+    <span class="tag">Verified Board</span>
+  </div>
+
+  <div class="hero-stage">
+    <div class="hero-copy">
+      <div class="subtitle">
+        Drive a cinematic first-round draft room: filter the big board, open player scouting cards, compare risk signals, and run live mock selections with a best-player-available engine that reacts pick by pick.
+      </div>
+      <div class="subtitle" style="margin-top:10px; color:#9af6c6">
+        Prospect pool reflects 2026 declarations and removes early-ineligible or returned-to-school names. The model blends eight-factor grading, positional value, and historical bust-risk patterns.
+      </div>
+      <div class="hero-actions">
+        <button class="hero-action" onclick="document.querySelector('[data-view=prospects]').click(); document.getElementById('search').focus();">Explore Board</button>
+        <button class="hero-action secondary" onclick="document.querySelector('[data-view=draft]').click();">Enter Mock Draft</button>
+      </div>
+    </div>
+
+    <aside class="draft-clock" aria-label="Draft snapshot">
+      <div class="clock-label">On The Clock</div>
+      <div class="clock-team">Las Vegas Raiders</div>
+      <div class="clock-grid">
+        <div class="clock-tile"><strong>32</strong><span>Round 1 Picks</span></div>
+        <div class="clock-tile"><strong>8</strong><span>Model Factors</span></div>
+        <div class="clock-tile"><strong>Live</strong><span>BPA Engine</span></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="stat-ribbon">
+    <div class="stat-tile"><div class="num" id="hero-prospect-count">32</div><div class="lbl">Scouted Prospects</div></div>
+    <div class="stat-tile"><div class="num" id="hero-elite-count">0</div><div class="lbl">Elite Grades</div></div>
+    <div class="stat-tile"><div class="num" id="hero-qb-count">0</div><div class="lbl">Quarterbacks</div></div>
+    <div class="stat-tile"><div class="num" id="hero-lowrisk-count">0</div><div class="lbl">Low-Risk Profiles</div></div>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-view="prospects">Prospect Board</button>
-  <button class="tab-btn" data-view="draft">Live Mock Draft</button>
-  <button class="tab-btn" data-view="bust">Bust-Risk Analysis</button>
-  <button class="tab-btn" data-view="method">Methodology (8 Factors)</button>
+  <button class="tab-btn active" data-view="prospects">Big Board</button>
+  <button class="tab-btn" data-view="draft">Mock Draft</button>
+  <button class="tab-btn" data-view="bust">Risk Lab</button>
+  <button class="tab-btn" data-view="method">Model</button>
 </nav>
 
 <main>
 
   <!-- ==================== PROSPECTS VIEW ==================== -->
   <section class="view active" id="view-prospects">
-    <div class="controls">
-      <input id="search" placeholder="Search player or school…" />
+    <div class="command-deck">
+      <div class="controls">
+      <input id="search" placeholder="Search prospect, school, or archetype..." />
       <select id="pos-filter">
         <option value="">All positions</option>
         <option>QB</option><option>RB</option><option>WR</option><option>TE</option>
@@ -326,6 +508,11 @@
       <span class="pill" data-tier="high">1st Rd (80-89)</span>
       <span class="pill" data-tier="mid">Day 2 value (70-79)</span>
       <span class="pill" data-tier="risk">High Bust Risk</span>
+      </div>
+      <div class="quick-tools" aria-label="Board tools">
+        <button class="icon-btn active" id="density-toggle" title="Spotlight mode">◎</button>
+        <button class="icon-btn" id="jump-draft" title="Go to mock draft">↳</button>
+      </div>
     </div>
     <div id="prospect-grid" class="grid"></div>
   </section>
@@ -336,7 +523,7 @@
       <button class="btn" id="reset-draft">Reset Draft</button>
       <button class="btn ghost" id="auto-pick">Auto-pick next 5</button>
       <span style="color:var(--muted); font-size:12px">
-        Tip: Select a prospect to make each team's pick. The right panel updates with real-time next-best options.
+        Select each pick manually or let the room run five selections. Recommendations update by need, composite grade, and positional drop-off.
       </span>
     </div>
     <div class="board-wrap">
@@ -402,8 +589,8 @@
 
   <div class="footer">
     Data reflects projections as of April 2026 pre-draft. Prospect evaluations combine public combine/pro-day
-    results, advanced college metrics (PFF grades, explosive-play rate, contested-catch %, pressure-rate-allowed),
-    level-of-opponent adjustments, and injury/character scouting reports. Model is illustrative — not financial advice.
+    results, advanced college metrics, level-of-opponent adjustments, and injury/character scouting reports.
+    Model is illustrative and built for exploration, debate, and draft-night storytelling.
   </div>
 </main>
 
@@ -1198,6 +1385,43 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    =================================================================== */
 renderGrid();
 renderPicks();
+
+/* ===================================================================
+   EXPERIENCE POLISH
+   =================================================================== */
+function hydrateHeroStats(){
+  const elite = PROSPECTS.filter(p => p.composite >= 90).length;
+  const qbs = PROSPECTS.filter(p => p.pos === 'QB').length;
+  const lowRisk = PROSPECTS.filter(p => p.bustRisk <= 25).length;
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  set('hero-prospect-count', PROSPECTS.length);
+  set('hero-elite-count', elite);
+  set('hero-qb-count', qbs);
+  set('hero-lowrisk-count', lowRisk);
+}
+function spotlightTopCards(){
+  const cards = [...document.querySelectorAll('.card')];
+  cards.forEach((card, index) => card.classList.toggle('spotlight-hit', index < 6));
+}
+const originalRenderGrid = renderGrid;
+renderGrid = function(){
+  originalRenderGrid();
+  if (document.body.classList.contains('spotlight')) spotlightTopCards();
+};
+const densityToggle = document.getElementById('density-toggle');
+if (densityToggle){
+  densityToggle.addEventListener('click', () => {
+    document.body.classList.toggle('spotlight');
+    densityToggle.classList.toggle('active', document.body.classList.contains('spotlight'));
+    spotlightTopCards();
+  });
+}
+const jumpDraft = document.getElementById('jump-draft');
+if (jumpDraft){
+  jumpDraft.addEventListener('click', () => document.querySelector('[data-view=draft]').click());
+}
+hydrateHeroStats();
+if (densityToggle) densityToggle.click();
 
 </script>
 </body>
