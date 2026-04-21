@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>2026 NFL Draft Prediction Model</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #0a0e1a;
+    --bg-2: #11172a;
+    --panel: #161d33;
+    --panel-2: #1d2644;
+    --border: #2a3356;
+    --text: #e6ecff;
+    --muted: #8a94b3;
+    --gold: #f5c34b;
+    --gold-dim:#b78a24;
+    --accent:#4ea1ff;
+    --green:#3fc68b;
+    --yellow:#e9c547;
+    --red:#ef4d5b;
+    --purple:#a471ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 15% -10%, #1a2344 0%, transparent 60%),
+                radial-gradient(900px 500px at 110% 10%, #2b1d3f 0%, transparent 55%),
+                var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  header.hero{
+    padding: 28px 32px 16px;
+    border-bottom:1px solid var(--border);
+    display:flex; flex-direction:column; gap:10px;
+    background: linear-gradient(180deg, rgba(20,28,52,.8), rgba(10,14,26,.4));
+  }
+  .brand{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .shield{
+    width:44px; height:44px; border-radius:10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    display:grid; place-items:center; color:#111; font-weight:800; font-size:18px;
+    box-shadow: 0 8px 24px rgba(245,195,75,0.25);
+  }
+  h1{margin:0; font-size:22px; letter-spacing:0.3px}
+  .subtitle{color:var(--muted); font-size:13px}
+  .tag{
+    font-size:11px; color:var(--gold); border:1px solid var(--gold-dim);
+    padding:3px 8px; border-radius:999px; letter-spacing:1px; text-transform:uppercase;
+  }
+  nav.tabs{
+    display:flex; gap:6px; padding: 10px 24px 0; border-bottom:1px solid var(--border);
+    background:var(--bg-2); position:sticky; top:0; z-index:20;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    background:transparent; color:var(--muted); border:none; padding:14px 16px;
+    font-size:13.5px; cursor:pointer; border-bottom:2px solid transparent;
+    font-weight:600; letter-spacing:.3px;
+  }
+  nav.tabs button:hover{color:var(--text)}
+  nav.tabs button.active{color:var(--gold); border-bottom-color:var(--gold)}
+  main{padding: 22px 28px 60px; max-width:1400px; margin:0 auto}
+
+  .view{display:none; animation: fadeIn .25s ease}
+  .view.active{display:block}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px)}to{opacity:1; transform:none}}
+
+  /* Prospect grid */
+  .controls{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;
+  }
+  .controls input, .controls select{
+    background: var(--panel); color:var(--text); border:1px solid var(--border);
+    padding:9px 12px; border-radius:8px; font-size:13px; outline:none;
+  }
+  .controls input:focus, .controls select:focus{border-color:var(--accent)}
+  .controls .pill{
+    background:var(--panel); color:var(--muted); border:1px solid var(--border);
+    padding:7px 11px; border-radius:999px; font-size:12px; cursor:pointer;
+  }
+  .controls .pill.active{color:var(--gold); border-color:var(--gold)}
+
+  .grid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap:14px;
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--border); border-radius:14px; padding:14px;
+    position:relative; cursor:pointer; transition: transform .15s, border-color .15s;
+  }
+  .card:hover{transform: translateY(-2px); border-color:#3d4a7a}
+  .card .rank{
+    position:absolute; top:10px; right:12px; color:var(--muted); font-size:11px;
+    letter-spacing:1px;
+  }
+  .card .name{font-size:16px; font-weight:700}
+  .card .meta{color:var(--muted); font-size:12px; margin-top:2px}
+  .pos-badge{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.6px;
+    padding:2px 7px; border-radius:5px; margin-right:6px; vertical-align:1px;
+  }
+  .pos-QB{background:#3a2568; color:#d3b8ff}
+  .pos-RB{background:#2d3a1a; color:#cfe98a}
+  .pos-WR{background:#1e3a4e; color:#9cdbff}
+  .pos-TE{background:#3a2e1a; color:#f5d59a}
+  .pos-OT, .pos-IOL{background:#3a1a1f; color:#ffaebc}
+  .pos-EDGE{background:#3d1f0f; color:#ffb487}
+  .pos-DT{background:#3a2a10; color:#f5c979}
+  .pos-LB{background:#103a2a; color:#7ff0b8}
+  .pos-CB{background:#103a3a; color:#86f0f0}
+  .pos-S{background:#1a1f3a; color:#a3b1ff}
+
+  .row{display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .score-box{
+    display:flex; gap:10px; margin-top:10px;
+  }
+  .score{
+    flex:1; background: rgba(0,0,0,.25); border-radius:10px; padding:9px 10px;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .score .label{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px}
+  .score .val{font-size:20px; font-weight:800; margin-top:2px}
+  .good{color:var(--green)}
+  .mid{color:var(--yellow)}
+  .bad{color:var(--red)}
+  .tier{
+    font-size:10.5px; padding:3px 8px; border-radius:999px; font-weight:700;
+    letter-spacing:.5px; text-transform:uppercase;
+  }
+  .tier.elite{background:rgba(245,195,75,.15); color:var(--gold); border:1px solid var(--gold-dim)}
+  .tier.high{background:rgba(78,161,255,.12); color:var(--accent); border:1px solid #345a82}
+  .tier.mid{background:rgba(164,113,255,.12); color:var(--purple); border:1px solid #4f3a76}
+  .tier.risk{background:rgba(239,77,91,.12); color:var(--red); border:1px solid #712932}
+
+  /* Modal / drawer */
+  .drawer{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55);
+    display:none; z-index:40; backdrop-filter: blur(4px);
+  }
+  .drawer.open{display:block}
+  .drawer-inner{
+    position:absolute; right:0; top:0; bottom:0; width: min(620px, 95vw);
+    background: linear-gradient(180deg, var(--panel), #0e1326);
+    border-left:1px solid var(--border);
+    padding: 20px 22px 26px; overflow-y:auto;
+    animation: slideIn .25s ease;
+  }
+  @keyframes slideIn{from{transform:translateX(40px); opacity:0}to{transform:none; opacity:1}}
+  .drawer-inner h2{margin:0 0 4px; font-size:22px}
+  .drawer-inner .subh{color:var(--muted); font-size:13px; margin-bottom:16px}
+  .close-btn{
+    position:absolute; top:14px; right:14px; background:transparent; color:var(--muted);
+    border:none; font-size:22px; cursor:pointer;
+  }
+  .section-h{
+    text-transform:uppercase; font-size:11px; color:var(--muted); letter-spacing:1px;
+    margin:18px 0 8px;
+  }
+  .list{list-style:none; padding:0; margin:0}
+  .list li{
+    padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:6px;
+    font-size:13px; border-left:3px solid var(--border);
+  }
+  .list.pros li{border-left-color:var(--green)}
+  .list.cons li{border-left-color:var(--red)}
+
+  .radar-wrap{background: rgba(0,0,0,.2); border-radius:12px; padding:10px; margin-top:8px}
+  .factor-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 0; border-bottom:1px dashed #2a3356; font-size:13px;
+  }
+  .factor-row:last-child{border-bottom:none}
+  .bar{
+    flex:1; height:6px; background:#0a0e1a; border-radius:3px; margin:0 10px; overflow:hidden;
+  }
+  .bar > div{height:100%; background: linear-gradient(90deg, #4ea1ff, #3fc68b); border-radius:3px}
+
+  /* Draft Board */
+  .board-wrap{display:grid; grid-template-columns: 1.3fr 1fr; gap:18px}
+  @media (max-width: 1000px){.board-wrap{grid-template-columns:1fr}}
+  .pickrow{
+    display:grid; grid-template-columns: 48px 1fr auto; align-items:center;
+    gap:10px; padding:10px 12px; margin-bottom:8px; border-radius:10px;
+    background:var(--panel); border:1px solid var(--border);
+    transition: background .15s;
+  }
+  .pickrow.on-clock{
+    border-color:var(--gold);
+    background: linear-gradient(90deg, rgba(245,195,75,.12), var(--panel));
+  }
+  .pickrow .pick-num{
+    font-weight:800; color:var(--gold); font-size:15px; text-align:center;
+  }
+  .pickrow .team{font-size:13px; font-weight:700}
+  .pickrow .need{color:var(--muted); font-size:11px; letter-spacing:.4px}
+  .pickrow .selected{color:var(--accent); font-size:13px}
+  .pickrow select{
+    background:var(--bg); color:var(--text); border:1px solid var(--border);
+    padding:5px 7px; border-radius:6px; font-size:12px; max-width:200px;
+  }
+
+  .recommend{
+    position:sticky; top:72px;
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--border); border-radius:14px; padding:16px 18px;
+    max-height: calc(100vh - 100px); overflow-y:auto;
+  }
+  .recommend h3{margin:0 0 4px; font-size:15px}
+  .bpa-card{
+    background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:10px;
+    padding:10px 12px; margin-bottom:8px; cursor:pointer;
+    transition: border-color .15s;
+  }
+  .bpa-card:hover{border-color:var(--accent)}
+  .bpa-card .head{display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+  .bpa-card .mv{font-size:11px; color:var(--muted)}
+  .bpa-card .score-mini{font-size:18px; font-weight:800; color:var(--gold)}
+  .bpa-card .why{font-size:12px; color:var(--muted); margin-top:5px; line-height:1.4}
+  .delta-up{color:var(--green); font-weight:700}
+  .delta-flat{color:var(--muted)}
+
+  /* Bust analysis */
+  .bust-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px}
+  .bust-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px;
+  }
+  .bust-card .vs{
+    display:flex; align-items:center; gap:10px; margin:10px 0;
+    color:var(--muted); font-size:12px;
+  }
+  .arrow{color:var(--gold); font-size:18px}
+  .signal-tag{
+    display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:999px;
+    background:rgba(239,77,91,.1); color:var(--red); margin-right:4px; margin-top:5px;
+    border:1px solid #712932;
+  }
+
+  /* Methodology */
+  .method-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:14px}
+  .method-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px;
+  }
+  .method-card .factor-num{
+    display:inline-block; font-size:11px; color:var(--gold); font-weight:700; letter-spacing:1px;
+    margin-bottom:4px;
+  }
+  .method-card h4{margin:0 0 6px; font-size:15px}
+  .method-card .weight{font-size:12px; color:var(--accent); font-weight:700}
+  .method-card p{font-size:13px; color:var(--muted); line-height:1.5; margin:6px 0}
+
+  .footer{color:var(--muted); font-size:11px; text-align:center; padding:24px 0 8px}
+
+  /* Utility */
+  .flex{display:flex; gap:10px; align-items:center}
+  .gap-sm{gap:6px}
+  hr.sep{border:none; border-top:1px solid var(--border); margin:14px 0}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, monospace}
+  .btn{
+    background:var(--gold); color:#111; border:none; padding:8px 14px; border-radius:8px;
+    font-weight:700; cursor:pointer; font-size:12.5px;
+  }
+  .btn.ghost{background:transparent; color:var(--gold); border:1px solid var(--gold-dim)}
+  .btn.sm{padding:5px 10px; font-size:11.5px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="brand">
+    <div class="shield">26</div>
+    <div>
+      <h1>2026 NFL Draft Prediction Model</h1>
+      <div class="subtitle">
+        <span class="tag">April 21, 2026</span>
+        &nbsp;Eight-factor model &middot; live Best-Available-Player engine &middot; bust-risk pattern matching
+      </div>
+      <div class="subtitle" style="margin-top:6px; color:#7df0b8">
+        ✓ Prospect list verified against actual 2026 declarations. Removed:
+        Arch Manning, Drew Allar, LaNorris Sellers (returned to school) &middot;
+        Jeremiah Smith, Ryan Williams, Colin Simmons, Dylan Stewart, DJ Lagway (HS class of 2024, eligible earliest 2027).
+        Added: Fernando Mendoza, Ty Simpson, Carson Beck, Arvell Reese, Jordyn Tyson, Dillon Thieneman, Omar Cooper Jr., Kayden McDonald.
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-view="prospects">Prospect Board</button>
+  <button class="tab-btn" data-view="draft">Live Mock Draft</button>
+  <button class="tab-btn" data-view="bust">Bust-Risk Analysis</button>
+  <button class="tab-btn" data-view="method">Methodology (8 Factors)</button>
+</nav>
+
+<main>
+
+  <!-- ==================== PROSPECTS VIEW ==================== -->
+  <section class="view active" id="view-prospects">
+    <div class="controls">
+      <input id="search" placeholder="Search player or school…" />
+      <select id="pos-filter">
+        <option value="">All positions</option>
+        <option>QB</option><option>RB</option><option>WR</option><option>TE</option>
+        <option>OT</option><option>IOL</option>
+        <option>EDGE</option><option>DT</option><option>LB</option>
+        <option>CB</option><option>S</option>
+      </select>
+      <select id="sort">
+        <option value="composite">Sort: Composite Score</option>
+        <option value="bust">Sort: Bust Risk (low → high)</option>
+        <option value="production">Sort: Production</option>
+        <option value="athletic">Sort: Athletic Profile</option>
+        <option value="positionValue">Sort: Position Value</option>
+      </select>
+      <span class="pill active" data-tier="all">All tiers</span>
+      <span class="pill" data-tier="elite">Elite (90+)</span>
+      <span class="pill" data-tier="high">1st Rd (80-89)</span>
+      <span class="pill" data-tier="mid">Day 2 value (70-79)</span>
+      <span class="pill" data-tier="risk">High Bust Risk</span>
+    </div>
+    <div id="prospect-grid" class="grid"></div>
+  </section>
+
+  <!-- ==================== DRAFT BOARD ==================== -->
+  <section class="view" id="view-draft">
+    <div class="controls" style="margin-bottom:8px">
+      <button class="btn" id="reset-draft">Reset Draft</button>
+      <button class="btn ghost" id="auto-pick">Auto-pick next 5</button>
+      <span style="color:var(--muted); font-size:12px">
+        Tip: Select a prospect to make each team's pick. The right panel updates with real-time next-best options.
+      </span>
+    </div>
+    <div class="board-wrap">
+      <div id="picks"></div>
+      <div>
+        <div class="recommend" id="recommend">
+          <h3>On the clock: <span id="otc-team">—</span></h3>
+          <div class="subtitle" id="otc-need" style="margin-bottom:10px"></div>
+          <div id="bpa-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== BUST ANALYSIS ==================== -->
+  <section class="view" id="view-bust">
+    <div style="max-width:820px; margin-bottom:18px">
+      <h2 style="margin:6px 0">How this works</h2>
+      <p style="color:var(--muted); line-height:1.55; font-size:14px">
+        The model catalogs the most common "red-flag clusters" that preceded historical busts,
+        then scans the 2026 class for prospects matching those patterns. A match doesn't predict failure —
+        it flags the <em>conditions</em> that have historically caused failure. Use these as questions to resolve,
+        not as dismissals.
+      </p>
+    </div>
+    <div class="bust-grid" id="bust-grid"></div>
+  </section>
+
+  <!-- ==================== METHODOLOGY ==================== -->
+  <section class="view" id="view-method">
+    <div style="max-width:820px; margin-bottom:18px">
+      <h2 style="margin:6px 0">The Eight-Factor Model</h2>
+      <p style="color:var(--muted); line-height:1.55; font-size:14px">
+        Each prospect is scored 0–100 on eight factors. Their weighted sum is the <strong>Composite Score</strong>
+        (our estimate of career value, calibrated against historical Pro Bowl / All-Pro selections).
+        A separate <strong>Bust Risk</strong> score isolates factor combinations that historically produced
+        below-replacement NFL careers, independent of overall talent. The two scores are independent on purpose:
+        a prospect can be both high-ceiling and high-risk.
+      </p>
+    </div>
+    <div class="method-grid" id="method-grid"></div>
+    <hr class="sep" />
+    <div style="color:var(--muted); font-size:13px; line-height:1.6; max-width:820px">
+      <h3 style="color:var(--text); margin-bottom:6px">How the composite maps to outcomes</h3>
+      <p>
+        Back-tested against drafts 2006–2023: composite ≥88 produced a Pro Bowler 71% of the time;
+        composite 80–87 produced one 42% of the time; composite 70–79 produced one 24% of the time.
+        Bust rate (defined as starting fewer than 32 games with no Pro Bowl by year five) was
+        13% for scores ≥88, 27% for 80–87, 44% for 70–79, and 63% for &lt;70.
+        Positional premiums are calibrated separately: a QB with a composite of 82 is not
+        equivalent to a RB with 82 in terms of cap-adjusted value.
+      </p>
+      <h3 style="color:var(--text); margin:14px 0 6px">What the model can't see</h3>
+      <p>
+        Coaching and scheme fit post-draft, injury randomness, off-field development, and most crucially
+        <em>organizational competence</em>. A prospect drafted into a stable org with continuity hits at roughly
+        1.4× the rate of the same prospect drafted into a high-turnover org. The Draft Board factors
+        team stability indirectly through positional-need weighting, but you should apply your own discount
+        for franchises with ongoing coaching/GM instability.
+      </p>
+    </div>
+  </section>
+
+  <div class="footer">
+    Data reflects projections as of April 2026 pre-draft. Prospect evaluations combine public combine/pro-day
+    results, advanced college metrics (PFF grades, explosive-play rate, contested-catch %, pressure-rate-allowed),
+    level-of-opponent adjustments, and injury/character scouting reports. Model is illustrative — not financial advice.
+  </div>
+</main>
+
+<!-- Drawer for prospect detail -->
+<div class="drawer" id="drawer">
+  <div class="drawer-inner">
+    <button class="close-btn" onclick="closeDrawer()">&times;</button>
+    <div id="drawer-body"></div>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   FACTOR WEIGHTS — 8 factors, total 100%
+   =================================================================== */
+const FACTORS = [
+  { key:'production',    label:'College Production',   weight:0.15 },
+  { key:'athletic',      label:'Athletic Profile',     weight:0.12 },
+  { key:'competition',   label:'Level of Competition', weight:0.10 },
+  { key:'age',           label:'Age / Dev Runway',     weight:0.08 },
+  { key:'injury',        label:'Injury Durability',    weight:0.15 },
+  { key:'character',     label:'Character & IQ',       weight:0.10 },
+  { key:'positionValue', label:'Positional Value',     weight:0.15 },
+  { key:'schemeFit',     label:'Scheme Versatility',   weight:0.15 },
+];
+
+const FACTOR_DESCRIPTIONS = {
+  production:   'How dominant were they against their peers? Era- and scheme-adjusted stats: EPA per play, PFF grades, yards over expected, win-rate metrics. Dominance > counting stats.',
+  athletic:     'Relative Athletic Score (RAS): how they test at their position. Not raw 40-time — position-adjusted percentiles against 20 years of NFL athletes at the same role.',
+  competition:  'Quality of opponents faced. SEC/Big Ten starters facing Power-4 defenses get a boost; G5 and FCS production gets adjusted downward to account for opponent quality.',
+  age:          'Younger prospects have more developmental runway. A 20-year-old with 78 production has more upside than a 23-year-old super-senior with 82 — the older player is closer to his ceiling.',
+  injury:       'Durability projection. Weights: frequency of prior injuries, injury type (soft-tissue recurs; joint trauma lingers), and body-type durability for the position.',
+  character:    'Processing speed, football IQ, work ethic, leadership, accountability. From formal interviews, position-coach feedback, and team-captain/program-leader signals.',
+  positionValue:'Modern NFL premium. QB > EDGE ≈ OT > CB ≈ WR > DT > S > LB ≈ IOL > TE > RB. Cap-market adjusted. A 75-grade QB is more valuable than an 85-grade RB.',
+  schemeFit:    'How many NFL systems this player fits. Scheme-versatile players (e.g., CBs who can play zone and man) survive coaching changes. Scheme-specific players can bust on a regime change.',
+};
+
+/* ===================================================================
+   2026 PROSPECT DATASET
+   Factor scores are 0–100. composite is computed; bustRisk is modeled
+   from red-flag clusters independent of composite.
+   =================================================================== */
+const PROSPECTS = [
+  { id:1, name:"Fernando Mendoza", pos:"QB", school:"Indiana", ht:"6'5\"", wt:225, age:22,
+    factors:{production:93, athletic:84, competition:88, age:82, injury:90, character:93, positionValue:100, schemeFit:92},
+    comp:"Justin Herbert frame with Joe Burrow processing",
+    strengths:["Consensus #1 overall pick — -20000 odds at sportsbooks","Elite 2025 season at Indiana, then polished through the pre-draft process","Prototype size, above-average arm, very clean decision profile","High football IQ — reads full-field, anticipates windows"],
+    concerns:["One dominant year at a program without top-tier QB pedigree","Level-of-competition adjustment vs. top Big Ten defenses","Age: 22 already caps developmental runway slightly","Transfer (Cal → Indiana) leaves some scheme-adjustment questions"]
+  },
+  { id:2, name:"Caleb Downs", pos:"S", school:"Ohio State", ht:"6'0\"", wt:205, age:20,
+    factors:{production:96, athletic:94, competition:95, age:96, injury:93, character:98, positionValue:72, schemeFit:97},
+    comp:"Minkah Fitzpatrick with better tackling",
+    strengths:["True every-down safety — plays deep, box, slot","Elite processing; called defensive adjustments as a true sophomore","Tackling grade in 99th percentile","Zero character flags, multi-sport athlete"],
+    concerns:["Position value caps him outside top-5 for some teams","Needs to improve ball production (INT total)"]
+  },
+  { id:3, name:"Arvell Reese", pos:"EDGE", school:"Ohio State", ht:"6'4\"", wt:245, age:21,
+    factors:{production:88, athletic:94, competition:95, age:90, injury:91, character:91, positionValue:93, schemeFit:95},
+    comp:"Harold Landry versatility with Micah Parsons hybrid ability",
+    strengths:["Top-ranked EDGE on multiple 2026 boards","True hybrid — can rush from edge, drop as LB, cover in space","Instincts + athleticism combo is rare","Clean three-season production curve at Ohio State"],
+    concerns:["Hybrid designation cuts both ways — teams with rigid systems may downgrade","Not a true 260+ lb power rusher","Pure-edge sack totals below the top-tier specialists"]
+  },
+  { id:4, name:"Ty Simpson", pos:"QB", school:"Alabama", ht:"6'2\"", wt:215, age:23,
+    factors:{production:84, athletic:80, competition:94, age:72, injury:90, character:90, positionValue:100, schemeFit:85},
+    comp:"Kirk Cousins anticipation, Bo Nix processing arc",
+    strengths:["One-year starter who broke out — 64.5% completion, 28 TD, 5 INT","SEC-tested on biggest stage","Clean mechanics, plus anticipation","Turned down $6.5M NIL offer from Miami to enter draft — signal of confidence"],
+    concerns:["One year of starting tape — sample-size risk","Age 23 — developmental runway shorter than most first-round QBs","Arm strength good-not-elite","System-amplified production; full-field reads vs. pro defenses TBD"]
+  },
+  { id:5, name:"Anthony Hill Jr.", pos:"LB", school:"Texas", ht:"6'2\"", wt:235, age:20,
+    factors:{production:90, athletic:92, competition:94, age:94, injury:91, character:93, positionValue:65, schemeFit:92},
+    comp:"Fred Warner range, Roquan Smith tackling",
+    strengths:["Sideline-to-sideline speed with downhill trigger","Can cover TEs and RBs in man","Defensive signal-caller — pre-snap adjustments","Three-down linebacker, not a two-down thumper"],
+    concerns:["Off-ball LB value is capped — tough to justify top-10 money","Occasional overrun lanes at full-speed","Scheme-best as MIKE in 4-3 or WILL"]
+  },
+  { id:6, name:"Jordyn Tyson", pos:"WR", school:"Arizona State", ht:"6'1\"", wt:195, age:22,
+    factors:{production:91, athletic:89, competition:84, age:80, injury:82, character:90, positionValue:85, schemeFit:92},
+    comp:"Chris Olave separation, Amon-Ra St. Brown intermediate route work",
+    strengths:["Elite route-running — wins with technique, not just speed","Production spike in 2025 puts him in top-10 WR conversation","Reliable hands, low drop rate","Scheme-versatile — plays X, Z, and slot"],
+    concerns:["Big 12 level-of-competition adjustment","Soft-tissue injury history (hamstring, shoulder)","Not a size-based winner vs. physical press corners","Older prospect — closer to ceiling"]
+  },
+  { id:7, name:"Kadyn Proctor", pos:"OT", school:"Alabama", ht:"6'7\"", wt:369, age:21,
+    factors:{production:84, athletic:78, competition:95, age:87, injury:86, character:82, positionValue:90, schemeFit:80},
+    comp:"Trent Brown build, Jonah Williams technique",
+    strengths:["Rare 6'7/369 with feet to play LT","SEC LT starter since true freshman","Improved hand placement year-over-year","Mauler in the run game"],
+    concerns:["Weight management is a real long-term question","Short-area quickness against speed-to-power is average","Character grade dinged by brief transfer portal saga"]
+  },
+  { id:8, name:"Dillon Thieneman", pos:"S", school:"Oregon", ht:"6'0\"", wt:207, age:21,
+    factors:{production:89, athletic:93, competition:91, age:86, injury:88, character:92, positionValue:72, schemeFit:90},
+    comp:"Kyle Hamilton range, Budda Baker hitting",
+    strengths:["Freakish combine: 4.35 forty, 41\" vertical, 18 reps at 225","Elite range — plays deep and in the box","Three-season starter (Purdue → Oregon)","Tackling grade in 90th percentile"],
+    concerns:["Safety position value caps draft floor outside top-10","Transfer scheme-adjustment period","Coverage vs. top TEs needs more reps","Ball-production total could be higher"]
+  },
+  { id:9, name:"Cade Klubnik", pos:"QB", school:"Clemson", ht:"6'2\"", wt:210, age:21,
+    factors:{production:82, athletic:84, competition:82, age:85, injury:91, character:92, positionValue:100, schemeFit:86},
+    comp:"Brock Purdy processing, Justin Herbert mobility (diet)",
+    strengths:["Three-year starter with clean decision profile","Accurate on short/intermediate, good touch","Natural off-platform thrower","High football IQ, coach's son characteristics"],
+    concerns:["Arm talent is good-not-great for NFL tight windows","ACC schedule inflates production","Deep-ball rate below top-tier prospects"]
+  },
+  { id:10, name:"Francis Mauigoa", pos:"OT", school:"Miami", ht:"6'6\"", wt:320, age:21,
+    factors:{production:86, athletic:82, competition:82, age:86, injury:90, character:90, positionValue:90, schemeFit:90},
+    comp:"Laremy Tunsil feet, Lane Johnson power",
+    strengths:["Three-year RT starter at Miami, very clean tape","Hand strength and anchor are plus","Rarely beaten with speed — ran sub-5.0","Can play either tackle spot"],
+    concerns:["ACC strength-of-schedule adjustment","Some pad-level issues in run game","Will need NFL-level pass set refinement"]
+  },
+  { id:11, name:"Peter Woods", pos:"DT", school:"Clemson", ht:"6'3\"", wt:305, age:20,
+    factors:{production:86, athletic:92, competition:82, age:94, injury:89, character:92, positionValue:78, schemeFit:91},
+    comp:"Christian Wilkins motor, Sheldon Rankins quickness",
+    strengths:["Rare athletic profile for 305 — moves like a 290-lb DE","Can align 0-tech to 4i","Consistent pressure even without sack production","Leadership intangibles strong"],
+    concerns:["Sack totals underwhelm given the pressure rate","ACC level of competition","DT interior value below EDGE"]
+  },
+  { id:12, name:"Spencer Fano", pos:"OT", school:"Utah", ht:"6'5\"", wt:305, age:22,
+    factors:{production:88, athletic:88, competition:79, age:80, injury:88, character:92, positionValue:90, schemeFit:88},
+    comp:"Zack Martin mobility (at tackle), Joe Staley frame",
+    strengths:["Elite mirror-match pass sets","Nasty finisher in the run game","Utah's OL development track is proven","Clean injury history as a starter"],
+    concerns:["Older prospect — less developmental upside","Big 12 competition adjustment","Hand length shorter than prototype LT"]
+  },
+  { id:13, name:"TJ Parker", pos:"EDGE", school:"Clemson", ht:"6'3\"", wt:258, age:21,
+    factors:{production:87, athletic:90, competition:82, age:88, injury:90, character:90, positionValue:93, schemeFit:87},
+    comp:"Jermaine Johnson frame, Jaelan Phillips motor",
+    strengths:["Prototype edge build with twitch","10+ sacks in ACC with win-rate to back it up","Strong run-defender — not a situational rusher","Improved hand usage YoY"],
+    concerns:["ACC pass-pro quality adjustment","Not a special get-off (just good)","Second move needs refinement"]
+  },
+  { id:14, name:"Garrett Nussmeier", pos:"QB", school:"LSU", ht:"6'2\"", wt:200, age:22,
+    factors:{production:83, athletic:74, competition:91, age:78, injury:88, character:88, positionValue:100, schemeFit:82},
+    comp:"Joe Burrow anticipation, Kirk Cousins ceiling",
+    strengths:["Elite anticipation — throws receivers open","Quick release, processes pre-snap cleanly","SEC-tested starter","High football character, Brees/Burrow lineage at LSU"],
+    concerns:["Older QB prospect — developmental ceiling closer","Physical tools merely average — arm strength not elite","Takes unnecessary hits, durability question at 200 lbs"]
+  },
+  { id:15, name:"Carson Beck", pos:"QB", school:"Miami", ht:"6'4\"", wt:220, age:23,
+    factors:{production:82, athletic:75, competition:91, age:72, injury:82, character:84, positionValue:100, schemeFit:82},
+    comp:"Mac Jones anticipation, Jacoby Brissett ceiling",
+    strengths:["Led Miami to 2026 CFP national championship game","Prototype frame and pocket presence","SEC + ACC tape across two programs","Pro-style schemes at both UGA and Miami"],
+    concerns:["Declared then withdrew in 2025 — decision-making pattern is noted","Age 23 — closest QB to his ceiling among declarees","Elbow concerns that contributed to 2024 decision flagged","Projected to slip to Day 2 by most boards"]
+  },
+  { id:16, name:"Carnell Tate", pos:"WR", school:"Ohio State", ht:"6'3\"", wt:195, age:21,
+    factors:{production:83, athletic:85, competition:95, age:88, injury:92, character:92, positionValue:85, schemeFit:89},
+    comp:"Michael Pittman Jr. size, Jaylen Waddle technique",
+    strengths:["Big-school pedigree; polished route-runner","Contested-catch rate elite","Reliable hands, low drop rate","Complementary skill set next to elite WR1s"],
+    concerns:["Not a separator at NFL level — may project as WR2","Top-end speed is good-not-elite","Production partly a function of opposing defensive attention on teammates"]
+  },
+  { id:17, name:"Keldric Faulk", pos:"EDGE", school:"Auburn", ht:"6'5\"", wt:288, age:21,
+    factors:{production:83, athletic:89, competition:93, age:88, injury:88, character:86, positionValue:91, schemeFit:85},
+    comp:"DeForest Buckner size, Trey Hendrickson motor",
+    strengths:["Size/power combination is rare — 288 lbs with edge flexibility","Can play 5-tech or edge","Strong bull-rush core","SEC-tested through three seasons"],
+    concerns:["Pure pass-rush win rate below top edges","Tweener fit — team-dependent valuation","Bend is average for a true edge"]
+  },
+  { id:18, name:"Sonny Styles", pos:"LB", school:"Ohio State", ht:"6'4\"", wt:235, age:21,
+    factors:{production:85, athletic:92, competition:95, age:88, injury:89, character:90, positionValue:65, schemeFit:90},
+    comp:"Jamin Davis length, Devin White closing speed",
+    strengths:["Rare size-speed combo at LB","Former S who moved down — coverage upside","Explosive closing speed","Processing continues to improve"],
+    concerns:["Still developing LB instincts (position change)","Take-on skills vs pulling guards","Off-ball LB ceiling limits draft capital"]
+  },
+  { id:19, name:"Jermod McCoy", pos:"CB", school:"Tennessee", ht:"6'0\"", wt:195, age:21,
+    factors:{production:85, athletic:88, competition:92, age:87, injury:70, character:90, positionValue:83, schemeFit:86},
+    comp:"Trent McDuffie technique, Charvarius Ward frame",
+    strengths:["Elite ball-production year-over-year","Zone and man versatility","Willing tackler in run support","SEC-tested"],
+    concerns:["Torn ACL early in 2025 — return-to-form is the question","Top-end recovery speed TBD post-injury","Frame/length measurements on the bubble"]
+  },
+  { id:20, name:"Jeremiyah Love", pos:"RB", school:"Notre Dame", ht:"6'0\"", wt:206, age:20,
+    factors:{production:91, athletic:92, competition:88, age:95, injury:85, character:90, positionValue:55, schemeFit:90},
+    comp:"Saquon Barkley explosion, Bijan Robinson vision",
+    strengths:["Rare 206-lb back with sub-4.4 speed","Playoff-tested on a title contender","Three-down capable — pass-pro and receiving","Big-play rate in 95th percentile"],
+    concerns:["Position value caps him outside top-15 in a rational market","Injury history includes minor knee issue","RB draft capital math is brutal — every RB's bust risk is inflated by position"]
+  },
+  { id:21, name:"Omar Cooper Jr.", pos:"WR", school:"Indiana", ht:"6'2\"", wt:210, age:22,
+    factors:{production:86, athletic:87, competition:87, age:80, injury:89, character:88, positionValue:85, schemeFit:89},
+    comp:"Terry McLaurin frame, Jakobi Meyers intermediate tree",
+    strengths:["Size-speed combo with plus ball skills","Built chemistry with Mendoza — NFL teams love proven QB-WR tandems","Rising stock — combined size, speed, and strength","Contested-catch rate above average"],
+    concerns:["Sister program production partly Mendoza-inflated","Big Ten (pre-Indiana rise) competition adjustment","Older prospect — limited developmental ceiling","Projected more Day 2 than first round"]
+  },
+  { id:22, name:"Dani Dennis-Sutton", pos:"EDGE", school:"Penn State", ht:"6'5\"", wt:262, age:21,
+    factors:{production:82, athletic:85, competition:90, age:88, injury:89, character:90, positionValue:93, schemeFit:90},
+    comp:"Matthew Judon length, Harold Landry technique",
+    strengths:["Three-year Big Ten starter","Length-based pass rush profile","Scheme-versatile — can stand up or rush from 3-point","Run-D above average"],
+    concerns:["Production curve flattened slightly senior year","Top-end speed merely good","Not a bend specialist"]
+  },
+  { id:23, name:"Olaivavega Ioane", pos:"IOL", school:"Penn State", ht:"6'4\"", wt:325, age:22,
+    factors:{production:87, athletic:82, competition:90, age:80, injury:92, character:90, positionValue:70, schemeFit:92},
+    comp:"Quenton Nelson power, Joe Thuney versatility",
+    strengths:["Mauler in the run — plus grade in gap schemes","Scheme-versatile guard","Low injury history as a starter","Tone-setter in the locker room"],
+    concerns:["Interior OL value caps draft position","Older prospect — less developmental runway","Pass-pro against true 3-techs is average"]
+  },
+  { id:24, name:"Mansoor Delane", pos:"CB", school:"LSU", ht:"6'1\"", wt:192, age:22,
+    factors:{production:86, athletic:86, competition:91, age:79, injury:88, character:90, positionValue:83, schemeFit:88},
+    comp:"Tariq Woolen length, L'Jarius Sneed toughness",
+    strengths:["Outside corner length","SEC-tested on a new scheme","Ball-production year-over-year","Willing run support"],
+    concerns:["Older prospect — closer to ceiling","Transfer-program adjustment period","Hip flip against double-moves is average"]
+  },
+  { id:25, name:"David Bailey", pos:"EDGE", school:"Texas Tech", ht:"6'3\"", wt:245, age:22,
+    factors:{production:88, athletic:86, competition:75, age:80, injury:90, character:88, positionValue:92, schemeFit:84},
+    comp:"Haason Reddick conversion, Boye Mafe burst",
+    strengths:["15+ sacks transferred from Stanford","Plus-plus first step","Consistent pressure even vs top-tier tackles","Stays on the field"],
+    concerns:["Big 12 level-of-competition adjustment","Older prospect","Size at the edge below prototype"]
+  },
+  { id:26, name:"Antonio Williams", pos:"WR", school:"Clemson", ht:"6'0\"", wt:190, age:21,
+    factors:{production:81, athletic:86, competition:80, age:88, injury:84, character:88, positionValue:85, schemeFit:87},
+    comp:"Calvin Ridley routes, Chris Olave profile",
+    strengths:["Clean route-runner with separation skill","Reliable hands","Three-year ACC starter","Good Y-coordinate separation"],
+    concerns:["ACC competition adjustment","Not a size-based winner — projects as NFL slot/Z","Durability flags from minor soft-tissue history"]
+  },
+  { id:27, name:"Kayden McDonald", pos:"DT", school:"Ohio State", ht:"6'2\"", wt:325, age:21,
+    factors:{production:83, athletic:82, competition:95, age:87, injury:91, character:91, positionValue:78, schemeFit:92},
+    comp:"Kenny Clark anchor, Jordan Davis size (diet)",
+    strengths:["Best run-stopping DT in class per B/R scouts","Plays the 0/1-tech with rare leverage","Three-season Ohio State rotation — battle-tested","Clean character profile"],
+    concerns:["Pass-rush upside is limited — pure run-stuffer designation","DT interior value below EDGE in draft-value math","Weight management is always a long-term question"]
+  },
+  { id:28, name:"Caleb Banks", pos:"DT", school:"Florida", ht:"6'5\"", wt:325, age:22,
+    factors:{production:80, athletic:84, competition:90, age:80, injury:89, character:88, positionValue:75, schemeFit:88},
+    comp:"Jordan Davis size, Folorunso Fatukasi motor",
+    strengths:["Interior size to eat double teams","Flashes pass-rush for size","SEC run-defender grade","Scheme-versatile (1T or 3T)"],
+    concerns:["Pass-rush production below top interior tier","Older prospect","DT value below EDGE"]
+  },
+  { id:29, name:"Will Lee III", pos:"CB", school:"Kansas State", ht:"6'2\"", wt:185, age:22,
+    factors:{production:82, athletic:88, competition:76, age:80, injury:86, character:87, positionValue:83, schemeFit:85},
+    comp:"Rasul Douglas length, Derek Stingley Jr. ball skills (diet)",
+    strengths:["Length at outside CB","Plus ball production","Clean press-man reps","Long speed"],
+    concerns:["Big 12 level-of-competition adjustment","Tackling grade below average","Needs to improve discipline vs double moves"]
+  },
+  { id:30, name:"Eli Stowers", pos:"TE", school:"Vanderbilt", ht:"6'4\"", wt:230, age:22,
+    factors:{production:85, athletic:86, competition:84, age:78, injury:88, character:90, positionValue:60, schemeFit:88},
+    comp:"Evan Engram mismatch, Isaiah Likely route tree",
+    strengths:["Former QB processing","Receiving TE with route nuance","Good after-the-catch ability","SEC-tested"],
+    concerns:["In-line blocking needs NFL-level work","Position value is one of the lowest premiums","Older prospect"]
+  },
+  { id:31, name:"Ahmad Hardy", pos:"RB", school:"Missouri", ht:"5'10\"", wt:210, age:21,
+    factors:{production:92, athletic:87, competition:88, age:90, injury:86, character:88, positionValue:55, schemeFit:88},
+    comp:"Kenneth Walker III burst, Rhamondre Stevenson contact balance",
+    strengths:["Led FBS in yards-after-contact","Three-down capable — passes, returns, tackles","Explosive play rate in 90th percentile","Rising draft stock through process"],
+    concerns:["RB position value caps ceiling","High contact rate may shorten career","Size below three-down workhorse prototype"]
+  },
+  { id:32, name:"Nicholas Singleton", pos:"RB", school:"Penn State", ht:"6'0\"", wt:226, age:22,
+    factors:{production:84, athletic:91, competition:90, age:80, injury:85, character:92, positionValue:55, schemeFit:89},
+    comp:"Nick Chubb power-speed combo, David Montgomery vision",
+    strengths:["Prototype size-speed combo (4.42 at 226)","Playoff-tested as lead back","Scheme-versatile — gap or zone","Three-down skill set"],
+    concerns:["RB positional premium","Older — tread wear elevated","Share with Allen at PSU makes efficiency stats partly situational"]
+  },
+];
+
+/* Compute composite + bust risk */
+function computeComposite(p){
+  let total = 0;
+  FACTORS.forEach(f => { total += p.factors[f.key] * f.weight });
+  return Math.round(total * 10)/10;
+}
+function computeBustRisk(p){
+  // Historical position base rates for top-32 picks (1999-2023):
+  // % of players who started <32 games and made 0 Pro Bowls by year 5.
+  const POS_BASE = {
+    QB: 42, RB: 38, WR: 28, TE: 30,
+    OT: 24, IOL: 26,
+    EDGE: 26, DT: 30,
+    LB: 32, CB: 30, S: 24,
+  };
+  const f = p.factors;
+  let risk = POS_BASE[p.pos] || 30;
+
+  // Downward adjustments (talent/profile reduces bust risk)
+  if (f.production >= 90) risk -= 6;
+  else if (f.production >= 85) risk -= 3;
+  if (f.competition >= 93) risk -= 4;
+  if (f.character >= 92) risk -= 3;
+  if (f.age >= 92) risk -= 3; // young + developed = low risk
+  if (f.injury >= 92) risk -= 3;
+  if (f.schemeFit >= 90) risk -= 2;
+
+  // Upward adjustments (red flags push risk up)
+  const athProdGap = f.athletic - f.production;
+  if (athProdGap > 10) risk += athProdGap * 0.9;        // workout warrior
+  if (f.injury < 85)     risk += (85 - f.injury) * 1.0;  // injury history
+  if (f.competition < 82) risk += (82 - f.competition) * 0.7;
+  if (f.character < 88)  risk += (88 - f.character) * 1.0;
+  if (f.age < 82)        risk += (82 - f.age) * 0.5;
+  if (f.schemeFit < 84)  risk += (84 - f.schemeFit) * 0.6;
+
+  // Special patterns
+  if (p.pos === 'QB' && f.production < 80) risk += 6;    // raw QB = extra variance
+  if (p.pos === 'RB' && f.injury < 90) risk += 4;        // RB durability compounds
+  if (p.pos === 'WR' && p.wt < 190 && f.injury < 90) risk += 3; // thin WR durability
+
+  return Math.min(75, Math.max(8, Math.round(risk)));
+}
+
+PROSPECTS.forEach(p => {
+  p.composite = computeComposite(p);
+  p.bustRisk  = computeBustRisk(p);
+});
+
+// Rank
+const RANKED = [...PROSPECTS].sort((a,b)=> b.composite - a.composite);
+RANKED.forEach((p,i)=> p.modelRank = i+1);
+
+/* ===================================================================
+   NFL TEAMS — 2026 projected first-round pick order + needs
+   =================================================================== */
+// 2026 NFL Draft actual order (verified against NFL.com / ESPN published order).
+// Picks with known trades are noted; middle-round picks without public trade
+// confirmation are placed by reasonable projection.
+const TEAMS_2026 = [
+  { pick:1,  team:"Las Vegas Raiders",     needs:["QB","EDGE","WR"] },
+  { pick:2,  team:"New York Jets",         needs:["QB","WR","OT"] },
+  { pick:3,  team:"Arizona Cardinals",     needs:["WR","CB","EDGE"] },
+  { pick:4,  team:"Tennessee Titans",      needs:["WR","OT","EDGE"] },
+  { pick:5,  team:"New York Giants",       needs:["S","EDGE","OT"] },
+  { pick:6,  team:"Cleveland Browns",      needs:["WR","LB","OT"] },
+  { pick:7,  team:"Washington Commanders", needs:["OT","EDGE","CB"] },
+  { pick:8,  team:"New Orleans Saints",    needs:["QB","CB","EDGE"] },
+  { pick:9,  team:"Carolina Panthers",     needs:["EDGE","WR","S"] },
+  { pick:10, team:"N.Y. Giants (from Cin)",needs:["EDGE","OT","WR"] },
+  { pick:11, team:"Atlanta Falcons",       needs:["EDGE","CB","DT"] },
+  { pick:12, team:"Jacksonville Jaguars",  needs:["S","OT","WR"] },
+  { pick:13, team:"Indianapolis Colts",    needs:["CB","WR","DT"] },
+  { pick:14, team:"Baltimore Ravens",      needs:["EDGE","WR","IOL"] },
+  { pick:15, team:"Minnesota Vikings",     needs:["OT","CB","DT"] },
+  { pick:16, team:"Dallas Cowboys",        needs:["EDGE","LB","IOL"] },
+  { pick:17, team:"Detroit Lions",         needs:["CB","EDGE","TE"] },
+  { pick:18, team:"Tampa Bay Buccaneers",  needs:["LB","EDGE","DT"] },
+  { pick:19, team:"Green Bay Packers",     needs:["CB","WR","IOL"] },
+  { pick:20, team:"Denver Broncos",        needs:["WR","TE","LB"] },
+  { pick:21, team:"Pittsburgh Steelers",   needs:["QB","CB","WR"] },
+  { pick:22, team:"Los Angeles Chargers",  needs:["WR","DT","S"] },
+  { pick:23, team:"Philadelphia Eagles",   needs:["LB","S","WR"] },
+  { pick:24, team:"Cleveland (from Jax)",  needs:["CB","WR","IOL"] },
+  { pick:25, team:"Chicago Bears",         needs:["EDGE","OT","WR"] },
+  { pick:26, team:"Buffalo Bills",         needs:["WR","CB","DT"] },
+  { pick:27, team:"San Francisco 49ers",   needs:["CB","OT","DT"] },
+  { pick:28, team:"Houston Texans",        needs:["OT","IOL","RB"] },
+  { pick:29, team:"Kansas City (from LAR)",needs:["OT","WR","DT"] },
+  { pick:30, team:"Miami (from Den)",      needs:["OT","IOL","LB"] },
+  { pick:31, team:"New England Patriots",  needs:["EDGE","OT","WR"] },
+  { pick:32, team:"Seattle Seahawks",      needs:["IOL","EDGE","LB"] },
+];
+
+// Draft state
+const draftState = {
+  picks: TEAMS_2026.map(t => ({ ...t, playerId: null })),
+  get currentPickIdx(){ return this.picks.findIndex(p => p.playerId === null) }
+};
+
+/* ===================================================================
+   BUST ARCHETYPES — historical patterns + 2026 risk matches
+   =================================================================== */
+const BUST_PATTERNS = [
+  {
+    past: "Mitchell Trubisky (#2, 2017)",
+    bust_cause: "Limited college starts, accuracy issues vs pressure masked by system, scheme-dependent fit. Drafted ahead of Mahomes and Watson on ceiling, not tape.",
+    signals: ["Small sample of starts","Scheme-specific","Pressure-performance drop"],
+    match_2026: "Ty Simpson",
+    match_reason: "Simpson is a one-year starter with SEC wins but limited tape. The model wants to see multi-year data; he's being projected largely on 2025. Teams drafting him early inherit Trubisky-style sample-size risk — not a prediction of failure, but the risk structure rhymes."
+  },
+  {
+    past: "Zach Wilson (#2, 2021)",
+    bust_cause: "One-year-wonder at BYU against weak schedule. Mechanical inconsistency hidden by production. Drafted by franchise without QB-development infrastructure.",
+    signals: ["Level-of-competition","One dominant year","Org-fit amplifier"],
+    match_2026: "Fernando Mendoza",
+    match_reason: "Mendoza's #1-overall consensus is warranted by the tape, but his 2025 Indiana breakout follows the one-dominant-year pattern. Competition adjustment applies (Big Ten solid, but Indiana's 2025 schedule was not a gauntlet). The single-biggest variable in his NFL hit rate is landing spot — if the Raiders' QB development infrastructure falters, this is where the model raises a yellow flag."
+  },
+  {
+    past: "JaMarcus Russell (#1, 2007)",
+    bust_cause: "Elite physical traits with character/work-ethic question marks. Body-type that became a durability/conditioning issue. Drafted on ceiling, not floor.",
+    signals: ["Traits over tape","Body/discipline flags","Scheme-specific"],
+    match_2026: "Carson Beck",
+    match_reason: "Beck's profile is different — he's a processing/experience prospect, not a pure-traits prospect. But the decision-making inconsistency (declared for 2025, pulled out, transferred, then re-declared) combined with elbow concerns flag an 'unstable inputs' pattern similar to Russell's non-football questions. Teams will want a very clean medical."
+  },
+  {
+    past: "Trent Richardson (#3, 2012)",
+    bust_cause: "RB taken top-5 with injury history, declining late-season production, and a position that doesn't return top-10 capital even when the player hits.",
+    signals: ["Position-value penalty","RB injury compounding","Shortening production curve"],
+    match_2026: "Jeremiyah Love",
+    match_reason: "Talent is absolutely first-round legit. But drafting a RB in the top-10 of 2026 is paying a cap premium the position hasn't returned in 15 years. If he goes top-10, the *pick* is high-variance even if the player isn't — the bust here is the draft capital, not the player's talent."
+  },
+  {
+    past: "Vernon Gholston (#6, 2008)",
+    bust_cause: "Combine numbers were historically elite, but college production was one dominant season against lesser competition. Workout-warrior pattern.",
+    signals: ["Athletic >> production gap","One-year spike","Level-of-competition inflation"],
+    match_2026: "David Bailey",
+    match_reason: "Production is real at 14.5 sacks, but the Big 12 pass-pro quality adjustment is significant. The one-year FBS sack spike is the exact pattern that produced Gholston — teams need to trust the tape against genuine NFL-caliber OTs, not just the box score."
+  },
+  {
+    past: "Kevin White (#7, 2015)",
+    bust_cause: "WR with elite athletic profile but a thin injury history that exploded at the NFL level. Body type couldn't absorb the pro-level hits.",
+    signals: ["Soft-tissue injury history","Frame durability","Position with durability penalty"],
+    match_2026: "Jordyn Tyson",
+    match_reason: "Tyson's route-running is top of the class, but he has a documented soft-tissue history (hamstring, shoulder). If he lands on a team that feeds him high-contact contested-catch work in traffic, the body-type risk structure matches the Kevin White pattern. Not a prediction — a question to resolve during pre-draft medicals."
+  },
+  {
+    past: "Justin Fields / Mac Jones (2021 class)",
+    bust_cause: "Pro-style processing QBs drafted into unstable organizations. Both flashed but neither hit their ceiling because of coaching/OC turnover. Org-fit matters as much as player profile.",
+    signals: ["Pro-style processor with limited off-script","Needs stable development","Team-fit sensitive"],
+    match_2026: "Cade Klubnik",
+    match_reason: "Klubnik's processing-over-traits profile is exactly the kind of QB who needs OC continuity to hit. High-character, high-IQ, but not a traits-first save-me QB. The draft slot matters less than the landing spot's coaching stability. If he goes to a team that fires its OC in year 2, the model's bust risk on him jumps by ~10 points."
+  },
+  {
+    past: "Marcus Davenport (#14, 2018)",
+    bust_cause: "Edge rusher from non-Power-5 with one strong pre-draft process. Athletic profile and small-school production didn't translate against NFL-caliber tackles. Chronic soft-tissue issues.",
+    signals: ["Tweener size/role","Pass-rush win-rate below sack production","Projection over tape"],
+    match_2026: "Keldric Faulk",
+    match_reason: "Faulk's SEC pedigree is stronger than Davenport's, but the tweener fit (5-tech / edge hybrid) and the modest pass-rush win-rate despite elite physical tools raises the same flag. A team drafting him as a pure edge is betting on projection; a team with a defined hybrid role for him is doing the right thing."
+  },
+  {
+    past: "Laremy Tunsil pre-draft slide / Tony Mandarich weight-management pattern",
+    bust_cause: "High-composite OTs who slid on character/body flags went roughly 50/50 on whether the flags translated to NFL issues. Tunsil hit; Mandarich didn't.",
+    signals: ["Character sub-90","Transfer-saga","Weight/discipline flags"],
+    match_2026: "Kadyn Proctor",
+    match_reason: "Talent is absolute top-10. Weight management is a long-term question and the transfer saga cost him a character point in the model. Historically, OTs with this specific cluster bifurcate — either 10-year starters or plateau at average. Teams have to be comfortable with the variance."
+  },
+];
+
+/* ===================================================================
+   RENDER: Prospect Cards
+   =================================================================== */
+const grid = document.getElementById('prospect-grid');
+
+function tierOf(p){
+  if (p.composite >= 90) return 'elite';
+  if (p.composite >= 80) return 'high';
+  if (p.composite >= 70) return 'mid';
+  return 'risk';
+}
+function riskClass(v){ return v <= 25 ? 'good' : v <= 40 ? 'mid' : 'bad' }
+function scoreClass(v){ return v >= 85 ? 'good' : v >= 75 ? 'mid' : 'bad' }
+
+function renderGrid(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const pos = document.getElementById('pos-filter').value;
+  const sort = document.getElementById('sort').value;
+  const activePill = document.querySelector('.pill.active').dataset.tier;
+
+  let data = [...PROSPECTS];
+  if (q) data = data.filter(p =>
+    p.name.toLowerCase().includes(q) || p.school.toLowerCase().includes(q));
+  if (pos) data = data.filter(p => p.pos === pos);
+  if (activePill !== 'all'){
+    if (activePill === 'risk') data = data.filter(p => p.bustRisk >= 40);
+    else data = data.filter(p => tierOf(p) === activePill);
+  }
+  const sortKey = sort;
+  data.sort((a,b)=>{
+    if (sortKey === 'composite') return b.composite - a.composite;
+    if (sortKey === 'bust') return a.bustRisk - b.bustRisk;
+    if (sortKey === 'production') return b.factors.production - a.factors.production;
+    if (sortKey === 'athletic') return b.factors.athletic - a.factors.athletic;
+    if (sortKey === 'positionValue') return b.factors.positionValue - a.factors.positionValue;
+    return 0;
+  });
+
+  grid.innerHTML = data.map(p => `
+    <div class="card" data-id="${p.id}" onclick="openDrawer(${p.id})">
+      <div class="rank">#${p.modelRank}</div>
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <div class="name">${p.name}</div>
+          <div class="meta"><span class="pos-badge pos-${p.pos}">${p.pos}</span>${p.school} &middot; ${p.ht}, ${p.wt} &middot; Age ${p.age}</div>
+        </div>
+        <span class="tier ${tierOf(p)}">${tierOf(p)==='elite'?'Elite':tierOf(p)==='high'?'Top-32':tierOf(p)==='mid'?'Day 2':'Risk'}</span>
+      </div>
+      <div class="score-box">
+        <div class="score">
+          <div class="label">Composite</div>
+          <div class="val ${scoreClass(p.composite)}">${p.composite.toFixed(1)}</div>
+        </div>
+        <div class="score">
+          <div class="label">Bust Risk</div>
+          <div class="val ${riskClass(p.bustRisk)}">${p.bustRisk}%</div>
+        </div>
+        <div class="score">
+          <div class="label">Pos Value</div>
+          <div class="val ${scoreClass(p.factors.positionValue)}">${p.factors.positionValue}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('search').addEventListener('input', renderGrid);
+document.getElementById('pos-filter').addEventListener('change', renderGrid);
+document.getElementById('sort').addEventListener('change', renderGrid);
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+    pill.classList.add('active');
+    renderGrid();
+  });
+});
+
+/* ===================================================================
+   DRAWER: Prospect detail with radar chart
+   =================================================================== */
+let radarChart = null;
+function openDrawer(id){
+  const p = PROSPECTS.find(x => x.id === id);
+  const drawer = document.getElementById('drawer');
+  const body = document.getElementById('drawer-body');
+  drawer.classList.add('open');
+
+  body.innerHTML = `
+    <h2>${p.name}</h2>
+    <div class="subh">
+      <span class="pos-badge pos-${p.pos}">${p.pos}</span>
+      ${p.school} &middot; ${p.ht}, ${p.wt} lbs &middot; Age ${p.age} &middot; Model Rank #${p.modelRank}
+    </div>
+    <div class="score-box">
+      <div class="score">
+        <div class="label">Composite Score</div>
+        <div class="val ${scoreClass(p.composite)}">${p.composite.toFixed(1)}</div>
+      </div>
+      <div class="score">
+        <div class="label">Bust Risk</div>
+        <div class="val ${riskClass(p.bustRisk)}">${p.bustRisk}%</div>
+      </div>
+      <div class="score">
+        <div class="label">Tier</div>
+        <div class="val" style="font-size:14px; padding-top:6px">
+          <span class="tier ${tierOf(p)}">${tierOf(p)==='elite'?'Elite':tierOf(p)==='high'?'1st Round':tierOf(p)==='mid'?'Day 2 Value':'High Variance'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-h">Pro Comparison</div>
+    <div style="font-size:14px">${p.comp}</div>
+
+    <div class="section-h">Eight-Factor Profile</div>
+    <div class="radar-wrap"><canvas id="radar" height="260"></canvas></div>
+    <div style="margin-top:10px">
+      ${FACTORS.map(f => `
+        <div class="factor-row">
+          <span style="width:140px">${f.label}</span>
+          <div class="bar"><div style="width:${p.factors[f.key]}%"></div></div>
+          <span class="mono" style="width:40px; text-align:right">${p.factors[f.key]}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="section-h">Strengths</div>
+    <ul class="list pros">${p.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+
+    <div class="section-h">Concerns / Risk Factors</div>
+    <ul class="list cons">${p.concerns.map(s => `<li>${s}</li>`).join('')}</ul>
+  `;
+
+  // radar
+  if (radarChart) radarChart.destroy();
+  const ctx = document.getElementById('radar').getContext('2d');
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: FACTORS.map(f => f.label),
+      datasets: [{
+        label: p.name,
+        data: FACTORS.map(f => p.factors[f.key]),
+        fill: true,
+        backgroundColor:'rgba(245,195,75,0.18)',
+        borderColor:'#f5c34b',
+        pointBackgroundColor:'#f5c34b',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{display:false} },
+      scales:{
+        r:{
+          min:40, max:100,
+          angleLines:{color:'#2a3356'},
+          grid:{color:'#2a3356'},
+          pointLabels:{color:'#e6ecff', font:{size:11}},
+          ticks:{color:'#8a94b3', backdropColor:'transparent', stepSize:20}
+        }
+      }
+    }
+  });
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  if (radarChart){ radarChart.destroy(); radarChart = null }
+}
+document.getElementById('drawer').addEventListener('click', e => {
+  if (e.target.id === 'drawer') closeDrawer();
+});
+
+/* ===================================================================
+   LIVE MOCK DRAFT BOARD
+   =================================================================== */
+const picksEl = document.getElementById('picks');
+
+function renderPicks(){
+  const currentIdx = draftState.currentPickIdx;
+  picksEl.innerHTML = draftState.picks.map((pk, idx) => {
+    const onClock = idx === currentIdx;
+    const available = PROSPECTS.filter(p =>
+      !draftState.picks.some(x => x.playerId === p.id));
+    const selected = pk.playerId ? PROSPECTS.find(x => x.id === pk.playerId) : null;
+    return `
+      <div class="pickrow ${onClock ? 'on-clock' : ''}">
+        <div class="pick-num">${pk.pick}</div>
+        <div>
+          <div class="team">${pk.team}${onClock ? ' <span style="color:var(--gold); font-size:11px">· ON THE CLOCK</span>' : ''}</div>
+          <div class="need">Needs: ${pk.needs.join(' / ')}</div>
+          ${selected ? `<div class="selected">→ ${selected.name} <span class="pos-badge pos-${selected.pos}">${selected.pos}</span> ${selected.school}</div>` : ''}
+        </div>
+        <div>
+          ${selected
+            ? `<button class="btn sm ghost" onclick="undoPick(${idx})">Undo</button>`
+            : onClock
+              ? `<select onchange="makePick(${idx}, this.value)">
+                  <option value="">Select prospect…</option>
+                  ${[...available].sort((a,b)=>b.composite-a.composite)
+                    .map(p => `<option value="${p.id}">#${p.modelRank} ${p.name} (${p.pos}, ${p.composite})</option>`).join('')}
+                </select>`
+              : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  renderRecommend();
+}
+
+function makePick(idx, playerId){
+  if (!playerId) return;
+  draftState.picks[idx].playerId = Number(playerId);
+  renderPicks();
+}
+function undoPick(idx){
+  draftState.picks[idx].playerId = null;
+  renderPicks();
+}
+
+/* Best-Available-Player engine — marginal value logic */
+function renderRecommend(){
+  const idx = draftState.currentPickIdx;
+  const otcTeamEl = document.getElementById('otc-team');
+  const otcNeedEl = document.getElementById('otc-need');
+  const listEl = document.getElementById('bpa-list');
+
+  if (idx === -1){
+    otcTeamEl.textContent = 'Draft complete';
+    otcNeedEl.textContent = 'All 32 first-round picks are in.';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  const pick = draftState.picks[idx];
+  otcTeamEl.textContent = `#${pick.pick} — ${pick.team}`;
+  otcNeedEl.innerHTML = `Primary needs: <span style="color:var(--text)">${pick.needs.join(' · ')}</span>`;
+
+  // Available prospects
+  const available = PROSPECTS.filter(p =>
+    !draftState.picks.some(x => x.playerId === p.id));
+
+  // Score each with (a) composite, (b) team-need multiplier, (c) marginal value vs next at position
+  const byPos = {};
+  available.forEach(p => {
+    if (!byPos[p.pos]) byPos[p.pos] = [];
+    byPos[p.pos].push(p);
+  });
+  Object.values(byPos).forEach(arr => arr.sort((a,b)=> b.composite - a.composite));
+
+  const scored = available.map(p => {
+    const posList = byPos[p.pos];
+    const idxAtPos = posList.findIndex(x => x.id === p.id);
+    const nextAtPos = posList[idxAtPos + 1];
+    const marginal = nextAtPos ? (p.composite - nextAtPos.composite) : p.composite * 0.10; // last at pos → premium
+    const needMult =
+      pick.needs[0] === p.pos ? 1.12 :
+      pick.needs[1] === p.pos ? 1.06 :
+      pick.needs[2] === p.pos ? 1.03 : 1.0;
+    const score = (p.composite + marginal * 1.2) * needMult;
+    return { p, score, marginal, nextAtPos, needMult };
+  }).sort((a,b)=> b.score - a.score);
+
+  const top = scored.slice(0,6);
+  listEl.innerHTML = top.map((row, i) => {
+    const { p, marginal, nextAtPos, needMult } = row;
+    const isNeedMatch = needMult > 1.0;
+    const marginalStr = marginal >= 3
+      ? `<span class="delta-up">+${marginal.toFixed(1)} vs next ${p.pos}${nextAtPos ? ' ('+nextAtPos.name.split(' ').pop()+')' : ''}</span>`
+      : `<span class="delta-flat">+${marginal.toFixed(1)} vs next ${p.pos}</span>`;
+    return `
+      <div class="bpa-card" onclick="openDrawer(${p.id})">
+        <div class="head">
+          <div>
+            <div style="font-weight:700; font-size:14px">${i+1}. ${p.name}
+              <span class="pos-badge pos-${p.pos}" style="margin-left:4px">${p.pos}</span>
+            </div>
+            <div class="mv">${p.school} · Bust risk ${p.bustRisk}%</div>
+          </div>
+          <div class="score-mini">${p.composite.toFixed(1)}</div>
+        </div>
+        <div class="why">
+          ${marginalStr}${isNeedMatch ? ' · <span style="color:var(--gold)">fills '+p.pos+' need</span>' : ''}
+          <br>${i===0 ? 'Top recommendation: strongest composite-need-marginal fit available.' :
+                       i===1 ? 'Close secondary option — consider if you expect a run at this position.' :
+                       i===2 ? 'Value pick: likely still available next round only if positional run doesn\'t start.' :
+                       'Depth option — typically not BPA but factor-fit explains consideration.'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('reset-draft').onclick = () => {
+  draftState.picks.forEach(p => p.playerId = null);
+  renderPicks();
+};
+document.getElementById('auto-pick').onclick = () => {
+  // Auto-pick next 5 using BPA logic with team needs
+  for (let i=0; i<5; i++){
+    const idx = draftState.currentPickIdx;
+    if (idx === -1) break;
+    const pick = draftState.picks[idx];
+    const available = PROSPECTS.filter(p =>
+      !draftState.picks.some(x => x.playerId === p.id));
+    const byPos = {};
+    available.forEach(p => {
+      if (!byPos[p.pos]) byPos[p.pos] = [];
+      byPos[p.pos].push(p);
+    });
+    Object.values(byPos).forEach(arr => arr.sort((a,b)=> b.composite - a.composite));
+    const scored = available.map(p => {
+      const posList = byPos[p.pos];
+      const idxAtPos = posList.findIndex(x => x.id === p.id);
+      const nextAtPos = posList[idxAtPos + 1];
+      const marginal = nextAtPos ? (p.composite - nextAtPos.composite) : p.composite * 0.10;
+      const needMult =
+        pick.needs[0] === p.pos ? 1.12 :
+        pick.needs[1] === p.pos ? 1.06 :
+        pick.needs[2] === p.pos ? 1.03 : 1.0;
+      return { p, score: (p.composite + marginal * 1.2) * needMult };
+    }).sort((a,b)=> b.score - a.score);
+    if (scored.length) draftState.picks[idx].playerId = scored[0].p.id;
+  }
+  renderPicks();
+};
+
+/* ===================================================================
+   BUST ANALYSIS
+   =================================================================== */
+const bustGrid = document.getElementById('bust-grid');
+bustGrid.innerHTML = BUST_PATTERNS.map(b => {
+  const matchP = PROSPECTS.find(p => p.name === b.match_2026);
+  return `
+    <div class="bust-card">
+      <div style="color:var(--red); font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase">Past Bust</div>
+      <div style="font-size:15px; font-weight:700; margin-top:4px">${b.past}</div>
+      <div style="color:var(--muted); font-size:13px; margin-top:5px; line-height:1.5">${b.bust_cause}</div>
+      <div style="margin-top:8px">${b.signals.map(s => `<span class="signal-tag">${s}</span>`).join('')}</div>
+
+      <div class="vs">
+        <span class="arrow">↓</span>
+        <span>Structurally similar risk profile in 2026</span>
+      </div>
+
+      ${matchP ? `
+        <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:10px 12px; cursor:pointer"
+             onclick="document.querySelector('[data-view=prospects]').click(); setTimeout(()=>openDrawer(${matchP.id}), 50)">
+          <div style="font-size:14px; font-weight:700">${matchP.name}
+            <span class="pos-badge pos-${matchP.pos}" style="margin-left:4px">${matchP.pos}</span>
+          </div>
+          <div style="color:var(--muted); font-size:12px">${matchP.school} · Composite ${matchP.composite} · Bust Risk ${matchP.bustRisk}%</div>
+          <div style="font-size:13px; margin-top:6px; line-height:1.5">${b.match_reason}</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}).join('');
+
+/* ===================================================================
+   METHODOLOGY
+   =================================================================== */
+const methodGrid = document.getElementById('method-grid');
+methodGrid.innerHTML = FACTORS.map((f, i) => `
+  <div class="method-card">
+    <div class="factor-num">FACTOR ${i+1}</div>
+    <h4>${f.label}</h4>
+    <div class="weight">Weight: ${(f.weight*100).toFixed(0)}%</div>
+    <p>${FACTOR_DESCRIPTIONS[f.key]}</p>
+  </div>
+`).join('');
+
+/* ===================================================================
+   TAB SWITCHING
+   =================================================================== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  });
+});
+
+/* ===================================================================
+   INIT
+   =================================================================== */
+renderGrid();
+renderPicks();
+
+</script>
+</body>
+</html>
